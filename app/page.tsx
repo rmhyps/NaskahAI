@@ -2,8 +2,9 @@
 
 import {
   AlertCircle, ArrowRight, BrainCircuit, Check, ChevronDown, ChevronRight, Circle,
-  Clock, Code, Copy, Cpu, Download, Eye, FileCode2, FileText, FolderOpen, Loader2, Maximize2,
-  Menu, Minimize2, Moon, Plus, RefreshCw, Save, Search, Sparkles, Sun, X,
+  Clock, Code, Copy, Cpu, Download, Eye, FileCode2, FileText, FolderArchive, FolderOpen,
+  Layers, Loader2, Maximize2, Menu, Minimize2, Moon, Palette, Pencil, Plus, RefreshCw, Save, Search, ShieldCheck, Sparkles, Sun,
+  Terminal, X,
 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ModelsResponse, RouterModelItem } from "../lib/nine-router";
@@ -123,6 +124,104 @@ function freshProject(): Project {
   return { id: crypto.randomUUID(), title: "Proyek baru", idea: "", status: "draft", spec: { answers: [], summary: "", customInstructions: "", documentRecommendations, selectedDocuments: [...DEFAULT_SELECTED] }, documents: [], updatedAt: new Date().toISOString() };
 }
 
+function buildMasterAgentPrompt(source: Project): string {
+  const title = source.title || "Proyek Baru";
+  const idea = source.idea?.trim() || "Aplikasi";
+  const summary = source.spec?.summary?.trim() || idea;
+  const custom = source.spec?.customInstructions?.trim();
+
+  const docDescriptions: Record<string, string> = {
+    "PRD.md": "Katalog fitur ber-ID stabil (F-001 dst), acceptance criteria, non-goals, dan ruang lingkup MVP.",
+    "architecture.md": "Komponen sistem, aliran data, batas tanggung jawab modul, dan keputusan teknologi.",
+    "database.md": "Skema entitas, field, relasi foreign key, constraint, indeks, dan siklus hidup penyimpanan.",
+    "api.md": "Kontrak endpoint, metode HTTP, format payload request/response, autentikasi, dan kode status error.",
+    "design.md": "Alur interaksi pengguna, navigasi halaman, dan penanganan lima kondisi UI (loading, empty, success, error, unauthorized).",
+    "implementation-plan.md": "Urutan fase implementasi terstruktur dan checklist deliverable yang wajib diselesaikan bertahap.",
+    "decisions.md": "Keputusan arsitektur terkonfirmasi, asumsi teknis, dan pertanyaan terbuka.",
+  };
+
+  const docsList = source.documents
+    .filter((d) => d.name !== "PROMPT.md")
+    .map((d) => `- \`${d.name}\`: ${docDescriptions[d.name] || "Dokumen spesifikasi resmi proyek."}`)
+    .join("\n");
+
+  const answersList = (source.spec?.answers ?? [])
+    .map((a) => `- ${a.question}: ${a.answer}`)
+    .join("\n");
+
+  return `# DIREKTIF EKSEKUSI REKAYASA SISTEM
+Konteks: Implementasi Teknis untuk AI Coding Agent (Claude Code, Cursor, Codex, Copilot, Antigravity)
+
+---
+
+## 1. Peran dan Otoritas
+Anda bertindak sebagai Lead Software Architect dan Senior Principal Full-Stack Engineer. Tanggung jawab Anda adalah merealisasikan proyek "${title}" dari fondasi awal hingga siap produksi (production-ready) dengan standar kode bersih, modular, dan teruji penuh.
+
+Ringkasan Proyek:
+- Ide Dasar: ${idea}
+- Ruang Lingkup Inti: ${summary}
+${custom ? `- Instruksi Khusus: ${custom}\n` : ""}${answersList ? `\nKeputusan Terkonfirmasi:\n${answersList}\n` : ""}
+---
+
+## 2. Sumber Kebenaran Tunggal (Ground Truth)
+Seluruh spesifikasi arsitektur, batasan teknis, dan kebutuhan fungsional telah dibakukan di dalam file-file Markdown berikut. Sebelum menulis kode, membuat file baru, atau menambah dependensi, Anda WAJIB membaca dan memahami dokumen yang tersedia:
+
+${docsList || "- `PRD.md`\n- `architecture.md`\n- `design.md`\n- `implementation-plan.md`\n- `decisions.md`"}
+
+Ketentuan Mutlak:
+Dilarang berasumsi, berspekulasi, atau mengambil inisiatif fitur di luar dokumen di atas. Segala ketidakpastian harus dikonfirmasikan kepada pengguna sebelum mengeksekusi perubahan destruktif.
+
+---
+
+## 3. Protokol Kerja dan Standar Rekayasa
+
+### A. Pengendalian Ruang Lingkup dan Pelacakan Fitur
+1. Zero Scope Creep: Dilarang keras menambahkan dependensi eksternal, endpoint, atau fitur yang tidak tercantum dalam PRD.md dan api.md.
+2. Penandaan ID Fitur: Setiap implementasi fungsi, komponen, atau pengujian wajib menyertakan referensi ID fitur terkait (misalnya F-001, F-002).
+
+### B. Kepatuhan Arsitektur dan Data
+1. Batasan Arsitektur: Terapkan arsitektur berlapis, pemisahan tanggung jawab, dan susunan teknologi sesuai architecture.md.
+2. Integritas Database: Bila sistem membutuhkan database, patuhi entitas, tipe data, indeks, dan relasi foreign key pada database.md. Dilarang membuat tabel atau kolom ad-hoc tanpa persetujuan.
+3. Kontrak API: Seluruh endpoint internal dan eksternal wajib mematuhi metode HTTP, path, struktur payload, validasi skema, dan error codes pada api.md.
+
+### C. Desain Antarmuka Berkarakter & Anti-UI-Slop (Adopsi frontend-design & anti-ui-slop)
+1. Desain Berakar pada Subjek: Jangan menggunakan template AI generik (misal: kartu metrik palsu dengan persentase mengambang, gradient ungu klise, atau dekorasi tanpa fungsi). Seluruh elemen antarmuka harus lulus uji tujuan (purpose test): apa masalah pengguna yang diselesaikan?
+2. Kepatuhan Token Desain: Terapkan sistem warna palet 4-6 hex dan pasangan tipografi terarah persis sesuai design.md.
+3. Aksesibilitas Manusia (WCAG): Pastikan rasio kontras warna minimal 4.5:1 untuk keterbacaan, sediakan indikator fokus keyboard (:focus-visible), dan pastikan target klik mobile minimal 44x44px.
+4. Kewajiban Lima Kondisi UI: Setiap komponen atau layar yang berinteraksi dengan data wajib menangani:
+   - Kondisi Memuat (Loading State): Indikator loading atau skeleton yang proporsional.
+   - Kondisi Kosong (Empty State): Tampilan ramah dan panduan tindakan saat belum ada data.
+   - Kondisi Sukses (Success State): Feedback visual yang jelas saat tindakan berhasil.
+   - Kondisi Gagal (Error State): Pesan kesalahan informatif dengan instruksi solusi atau coba ulang.
+   - Kondisi Izin (Unauthorized State): Proteksi akses yang sesuai bila otorisasi diperlukan.
+
+### D. Higienitas Komentar & Kode Bersih (Adopsi antislop-code)
+1. Larangan Komentar Dekoratif: Dilarang keras menulis banner dekoratif menggunakan karakter berulang (seperti // =======================, // --------- ROUTE ---------, dsb.).
+2. Larangan Menarasikan Kode Jelas: Dilarang mengulang hal yang sudah jelas terbaca pada kode (misal: // Initialize variable di atas deklarasi variabel, // Return response di atas return, // User class di atas class User).
+3. Larangan Narasi Langkah Sepele: Dilarang menulis komentar bertahap yang mendikte kontrol alur (misal: // Step 1: Validate input, // Step 2: Query database, // Step 3: Send email).
+4. Larangan Label Kosong: Dilarang memberi label kategori tanpa informasi teknis (misal: // Main logic, // Helper function, // Note: Important).
+5. Larangan Emoji di Kode: Dilarang menggunakan emoji dekorasi di dalam komentar atau kode (misal: // OK, // Fast, dsb.).
+6. Komentar yang Bernilai: Komentar HANYA ditulis jika menjelaskan alasan arsitektural (why), asumsi algoritma non-trival, batas keamanan sistem, atau penanganan edge cases khusus.
+
+### E. Eksekusi Berbasis Fase Tertutup
+1. Buka implementation-plan.md.
+2. Jalankan pengerjaan secara berurutan mulai dari Fase 1. Selesaikan seluruh dependensi sebelum melangkah ke fase berikutnya.
+3. Perbarui checklist [x] pada implementation-plan.md secara berkala saat tahapan pekerjaan selesai.
+
+### F. Verifikasi Kualitas dan Disiplin Testing
+1. Tulis kode yang strongly-typed, modular, dan mematuhi konvensi linter proyek.
+2. Sediakan unit test atau integration test untuk logika bisnis kritis dan acceptance criteria.
+3. Jalankan pengujian dan build (misal: npm run build, pnpm test) untuk memverifikasi 0 error sebelum menyerahkan hasil.
+4. Sertakan penalaran teknis (reasoning) yang mendalam mengenai alasan arsitektur di balik solusi yang Anda buat.
+
+---
+
+## 4. Langkah Awal Anda Sekarang
+1. Pindai dan baca seluruh dokumen perencanaan yang disebutkan di atas.
+2. Sajikan ringkasan 3 sampai 5 poin mengenai pemahaman Anda terhadap arsitektur dan prioritas Fase 1.
+3. Ajukan rancangan struktur proyek awal (scaffolding) untuk dikonfirmasi pengguna sebelum mulai menulis kode.`;
+}
+
 function normalizeProject(source: Project): Project {
   const documentRecommendations = normalizeDocumentRecommendations(
     source.spec.documentRecommendations
@@ -131,6 +230,14 @@ function normalizeProject(source: Project): Project {
     source.spec.selectedDocuments,
     documentRecommendations
   );
+  const docs = [...source.documents];
+  if (docs.length > 0 && !docs.some((d) => d.name === "PROMPT.md")) {
+    docs.push({
+      name: "PROMPT.md",
+      content: buildMasterAgentPrompt({ ...source, documents: docs }),
+      mode: "ai",
+    });
+  }
   return {
     ...source,
     spec: {
@@ -138,7 +245,111 @@ function normalizeProject(source: Project): Project {
       documentRecommendations,
       selectedDocuments,
     },
+    documents: docs,
   };
+}
+
+const CRC_TABLE = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let k = 0; k < 8; k++) {
+    c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  }
+  CRC_TABLE[i] = c >>> 0;
+}
+
+function computeCrc32(data: Uint8Array): number {
+  let crc = 0 ^ -1;
+  for (let i = 0; i < data.length; i++) {
+    crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ data[i]) & 0xff];
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+function buildZipFile(files: Array<{ name: string; content: string }>): Uint8Array {
+  const enc = new TextEncoder();
+  const fileEntries = files.map((f) => ({
+    nameBytes: enc.encode(f.name),
+    contentBytes: enc.encode(f.content),
+  }));
+
+  let offset = 0;
+  const parts: Uint8Array[] = [];
+  const centralDirs: Uint8Array[] = [];
+
+  for (const f of fileEntries) {
+    const crc = computeCrc32(f.contentBytes);
+    const localHeader = new Uint8Array(30 + f.nameBytes.length);
+    const view = new DataView(localHeader.buffer);
+
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 0, true);
+    view.setUint16(8, 0, true);
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint32(14, crc, true);
+    view.setUint32(18, f.contentBytes.length, true);
+    view.setUint32(22, f.contentBytes.length, true);
+    view.setUint16(26, f.nameBytes.length, true);
+    view.setUint16(28, 0, true);
+    localHeader.set(f.nameBytes, 30);
+
+    parts.push(localHeader);
+    parts.push(f.contentBytes);
+
+    const cdHeader = new Uint8Array(46 + f.nameBytes.length);
+    const cdView = new DataView(cdHeader.buffer);
+    cdView.setUint32(0, 0x02014b50, true);
+    cdView.setUint16(4, 20, true);
+    cdView.setUint16(6, 20, true);
+    cdView.setUint16(8, 0, true);
+    cdView.setUint16(10, 0, true);
+    cdView.setUint16(12, 0, true);
+    cdView.setUint16(14, 0, true);
+    cdView.setUint32(16, crc, true);
+    cdView.setUint32(20, f.contentBytes.length, true);
+    cdView.setUint32(24, f.contentBytes.length, true);
+    cdView.setUint16(28, f.nameBytes.length, true);
+    cdView.setUint16(30, 0, true);
+    cdView.setUint16(32, 0, true);
+    cdView.setUint16(34, 0, true);
+    cdView.setUint16(36, 0, true);
+    cdView.setUint32(38, 0, true);
+    cdView.setUint32(42, offset, true);
+    cdHeader.set(f.nameBytes, 46);
+
+    centralDirs.push(cdHeader);
+    offset += localHeader.length + f.contentBytes.length;
+  }
+
+  const cdOffset = offset;
+  let cdSize = 0;
+  for (const cd of centralDirs) {
+    parts.push(cd);
+    cdSize += cd.length;
+  }
+
+  const eocd = new Uint8Array(22);
+  const eocdView = new DataView(eocd.buffer);
+  eocdView.setUint32(0, 0x06054b50, true);
+  eocdView.setUint16(4, 0, true);
+  eocdView.setUint16(6, 0, true);
+  eocdView.setUint16(8, fileEntries.length, true);
+  eocdView.setUint16(10, fileEntries.length, true);
+  eocdView.setUint32(12, cdSize, true);
+  eocdView.setUint32(16, cdOffset, true);
+  eocdView.setUint16(20, 0, true);
+  parts.push(eocd);
+
+  const totalLength = parts.reduce((acc, p) => acc + p.length, 0);
+  const output = new Uint8Array(totalLength);
+  let cur = 0;
+  for (const part of parts) {
+    output.set(part, cur);
+    cur += part.length;
+  }
+  return output;
 }
 
 function inlineText(value: string) {
@@ -634,6 +845,12 @@ export default function Home() {
   const [busy, setBusy] = useState("");
   const [busyElapsed, setBusyElapsed] = useState(0);
   const [copiedDoc, setCopiedDoc] = useState<string | null>(null);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [renamingSidebarId, setRenamingSidebarId] = useState<string | null>(null);
+  const [renamingSidebarText, setRenamingSidebarText] = useState<string>("");
+  const topbarTitleInputRef = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState("");
   const [aiMode, setAiMode] = useState<"unknown" | "ai" | "demo">("unknown");
   const [mobileNav, setMobileNav] = useState(false);
@@ -957,7 +1174,7 @@ export default function Home() {
         );
         updateProject({ documents: [...generated], status: "partial" });
       }
-      const finished = {
+      const promptDocContent = buildMasterAgentPrompt({
         ...project,
         spec: {
           ...project.spec,
@@ -965,9 +1182,26 @@ export default function Home() {
           selectedDocuments: selectedDocs,
         },
         documents: generated,
+      });
+
+      const finalGenerated = generated.some((d) => d.name === "PROMPT.md")
+        ? generated.map((d) => (d.name === "PROMPT.md" ? { ...d, content: promptDocContent } : d))
+        : [...generated, { name: "PROMPT.md", content: promptDocContent, mode: "ai" }];
+
+      const finished = {
+        ...project,
+        spec: {
+          ...project.spec,
+          documentRecommendations,
+          selectedDocuments: selectedDocs,
+        },
+        documents: finalGenerated,
         status: "ready",
       };
-      updateProject({ documents: generated, status: "ready" }); setActiveDoc(generated[0]?.name ?? "PRD.md"); setPhase("documents"); await saveProject(finished, false);
+      updateProject({ documents: finalGenerated, status: "ready" });
+      setActiveDoc(finalGenerated[0]?.name ?? "PRD.md");
+      setPhase("documents");
+      await saveProject(finished, false);
     } catch (error) {
       const partialProject = {
         ...project,
@@ -1048,16 +1282,110 @@ export default function Home() {
     }
   }
 
+  async function renameProject(newTitle: string) {
+    const cleanTitle = newTitle.trim() || "Proyek tanpa judul";
+    const docs = project.documents.map((d) =>
+      d.name === "PROMPT.md"
+        ? { ...d, content: buildMasterAgentPrompt({ ...project, title: cleanTitle }) }
+        : d
+    );
+    const updated = {
+      ...project,
+      title: cleanTitle,
+      documents: docs,
+      updatedAt: new Date().toISOString(),
+    };
+    setProject(updated);
+    setProjects((current) => [updated, ...current.filter((item) => item.id !== updated.id)]);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([updated, ...projects.filter((item) => item.id !== updated.id)])
+    );
+    await saveProject(updated, false);
+    setNotice(`Nama proyek diperbarui menjadi "${cleanTitle}".`);
+  }
+
+  async function handleConfirmSidebarRename(id: string) {
+    const cleanTitle = renamingSidebarText.trim() || "Proyek tanpa judul";
+    setRenamingSidebarId(null);
+
+    if (id === project.id) {
+      await renameProject(cleanTitle);
+      return;
+    }
+
+    const target = projects.find((p) => p.id === id);
+    if (!target) return;
+
+    const updatedDocs = target.documents.map((d) =>
+      d.name === "PROMPT.md"
+        ? { ...d, content: buildMasterAgentPrompt({ ...target, title: cleanTitle }) }
+        : d
+    );
+    const updatedTarget: Project = {
+      ...target,
+      title: cleanTitle,
+      documents: updatedDocs,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const nextProjects = projects.map((p) => (p.id === id ? updatedTarget : p));
+    setProjects(nextProjects);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProjects));
+
+    try {
+      await api<{ id: string }>("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation: "save", project: updatedTarget }),
+      });
+      setNotice(`Nama proyek diperbarui menjadi "${cleanTitle}".`);
+    } catch {
+      setNotice(`Nama proyek diperbarui di perangkat ini.`);
+    }
+  }
+
   async function saveProject(source = project, showNotice = true) {
     const derivedTitle = source.title === "Proyek baru" && source.idea ? source.idea.split(/[.!?\n]/)[0].slice(0, 58) : source.title;
     const updated = { ...source, title: derivedTitle || "Proyek tanpa judul", updatedAt: new Date().toISOString() };
-    setProject(updated); setProjects((current) => [updated, ...current.filter((item) => item.id !== updated.id)]);
+    setProject(updated);
+    setProjects((current) => [updated, ...current.filter((item) => item.id !== updated.id)]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([updated, ...projects.filter((item) => item.id !== updated.id)]));
+    setSaving(true);
     try {
-      const result = await api<{ id: string }>("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ operation: "save", project: updated }) });
+      const result = await api<{ id: string }>("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation: "save", project: updated }),
+      });
       if (result.id !== updated.id) setProject((current) => ({ ...current, id: result.id }));
-      if (showNotice) setNotice("Proyek tersimpan dan siap dibuka lagi.");
-    } catch { if (showNotice) setNotice("Tersimpan di perangkat ini. Sinkronisasi server belum tersedia."); }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      if (showNotice) setNotice("Proyek berhasil disimpan!");
+    } catch {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      if (showNotice) setNotice("Proyek tersimpan di perangkat ini.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function downloadAllZip(source = project) {
+    if (!source.documents.length) return setNotice("Belum ada dokumen yang siap diunduh.");
+    const cleanTitle = (source.title || "naskah-ai-proyek")
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "naskah-ai-proyek";
+    const zipBytes = buildZipFile(source.documents);
+    const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: "application/zip" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${cleanTitle}.zip`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setNotice(`Berhasil mengunduh ${source.documents.length} dokumen dalam format .zip!`);
   }
 
   const updateDocument = (content: string) => updateProject({ documents: project.documents.map((item) => item.name === activeDoc ? { ...item, content } : item) });
@@ -1088,6 +1416,30 @@ export default function Home() {
       setNotice("Gagal menyalin teks ke clipboard.");
     }
   }
+
+  async function copyMasterPrompt() {
+    const promptDoc = project.documents.find((d) => d.name === "PROMPT.md");
+    const promptText = promptDoc?.content || buildMasterAgentPrompt(project);
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(promptText);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = promptText;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2500);
+      setNotice("Prompt Master Coding Agent berhasil disalin ke clipboard!");
+    } catch {
+      setNotice("Gagal menyalin prompt ke clipboard.");
+    }
+  }
   const completedSelectedDocuments = selectedDocs.filter((name) =>
     project.documents.some((document) => document.name === name)
   ).length;
@@ -1103,16 +1455,117 @@ export default function Home() {
       <div className="brand"><span className="brand-mark"><FileText size={18} /></span><span><strong>Naskah</strong><em>AI planner</em></span><button className="mobile-close" onClick={() => setMobileNav(false)}><X size={20} /></button></div>
       <button className="new-project" onClick={newProject}><Plus size={17} /> Proyek baru</button>
       <div className="side-label">Proyek terakhir</div>
-      <nav className="project-list">{[project, ...projects.filter((item) => item.id !== project.id)].map((item) => <button key={item.id} className={item.id === project.id ? "project-active" : ""} onClick={() => openProject(item)}><span className="project-icon"><FolderOpen size={16} /></span><span><strong>{item.title}</strong><em>{item.documents.length ? `${item.documents.length} dokumen` : "Masih dirancang"}</em></span><ChevronRight size={15} /></button>)}</nav>
+      <nav className="project-list">
+        {[project, ...projects.filter((item) => item.id !== project.id)].map((item) => {
+          const isCurrent = item.id === project.id;
+          const isRenaming = renamingSidebarId === item.id;
+
+          if (isRenaming) {
+            return (
+              <div key={item.id} className="sidebar-rename-row" onClick={(e) => e.stopPropagation()}>
+                <input
+                  autoFocus
+                  type="text"
+                  value={renamingSidebarText}
+                  onChange={(e) => setRenamingSidebarText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleConfirmSidebarRename(item.id);
+                    if (e.key === "Escape") setRenamingSidebarId(null);
+                  }}
+                  placeholder="Nama proyek..."
+                />
+                <button
+                  type="button"
+                  className="sidebar-rename-action confirm"
+                  onClick={() => handleConfirmSidebarRename(item.id)}
+                  title="Simpan nama"
+                >
+                  <Check size={13} />
+                </button>
+                <button
+                  type="button"
+                  className="sidebar-rename-action cancel"
+                  onClick={() => setRenamingSidebarId(null)}
+                  title="Batal"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={item.id}
+              className={`project-item-wrap ${isCurrent ? "project-active" : ""}`}
+            >
+              <button
+                type="button"
+                className="project-item-main"
+                onClick={() => openProject(item)}
+              >
+                <span className="project-icon">
+                  <FolderOpen size={16} />
+                </span>
+                <span className="project-item-text">
+                  <strong>{item.title}</strong>
+                  <em>
+                    {item.documents.length
+                      ? `${item.documents.length} dokumen`
+                      : "Masih dirancang"}
+                  </em>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="project-item-rename-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRenamingSidebarId(item.id);
+                  setRenamingSidebarText(item.title);
+                }}
+                title="Ganti nama proyek"
+              >
+                <Pencil size={12} />
+              </button>
+            </div>
+          );
+        })}
+      </nav>
       <div className="sidebar-note"><BrainCircuit size={18} /><div><strong>Planner only</strong><p>Membuat dokumen dan diagram. Tidak menjalankan coding.</p></div></div>
     </aside>
 
     <section className="workspace">
       <header className="topbar">
         <button className="menu-button" onClick={() => setMobileNav(true)}><Menu size={20} /></button>
-        <div>
+        <div className="topbar-title-section">
           <span className="eyebrow">Project studio</span>
-          <input aria-label="Nama proyek" value={project.title} onChange={(event) => updateProject({ title: event.target.value })} />
+          <div className="project-title-editor">
+            <input
+              ref={topbarTitleInputRef}
+              aria-label="Nama proyek"
+              value={project.title}
+              onChange={(event) => updateProject({ title: event.target.value })}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                  renameProject(project.title);
+                }
+              }}
+              onBlur={() => {
+                renameProject(project.title);
+              }}
+              title="Klik untuk ubah nama proyek (tekan Enter untuk simpan)"
+            />
+            <button
+              type="button"
+              className="project-title-rename-btn"
+              onClick={() => topbarTitleInputRef.current?.focus()}
+              title="Ganti nama proyek"
+            >
+              <Pencil size={13} />
+            </button>
+          </div>
         </div>
         <div className="top-actions">
           {/* Model Selector 9Router */}
@@ -1245,7 +1698,21 @@ export default function Home() {
             {aiMode === "ai" ? <Sparkles size={14} /> : <Circle size={11} />}
             {aiMode === "ai" ? "9Router aktif" : aiMode === "demo" ? "Mode demo" : "AI belum dites"}
           </span>
-          <button className="ghost-button" onClick={() => saveProject()}><Save size={16} /> Simpan</button>
+          <button
+            className={`ghost-button save-button ${saveSuccess ? "saved" : ""}`}
+            onClick={() => saveProject()}
+            disabled={saving}
+            title="Simpan proyek"
+          >
+            {saving ? (
+              <Loader2 size={15} className="spin" />
+            ) : saveSuccess ? (
+              <Check size={15} />
+            ) : (
+              <Save size={15} />
+            )}
+            {saving ? "Menyimpan..." : saveSuccess ? "Tersimpan!" : "Simpan"}
+          </button>
         </div>
       </header>
       <div className="progress-wrap">{["Ide", "Wawancara", "Konfirmasi", "Dokumen"].map((label, index) => <div key={label} className={progress >= index + 1 ? "progress-step active" : "progress-step"}><span>{progress > index + 1 ? <Check size={13} /> : index + 1}</span><em>{label}</em></div>)}</div>
@@ -1267,13 +1734,13 @@ export default function Home() {
           </div>
         )}
 
-        {phase === "idea" && <section className="stage idea-stage"><div className="stage-kicker"><Sparkles size={16} /> Mulai dari ide mentah</div><h1>Proyek yang bagus dimulai dari pertanyaan yang tepat.</h1><p>Ceritakan apa yang ingin lu buat. AI akan mencari bagian yang masih ambigu sebelum menulis dokumen.</p><div className="idea-box"><textarea autoFocus placeholder="Contoh: Gue mau bikin aplikasi Flutter yang menampilkan kondisi langit pada tanggal kelahiran pengguna menggunakan API astronomi..." value={project.idea} onChange={(event) => updateProject({ idea: event.target.value })} /><div className="idea-footer"><span>{project.idea.length.toLocaleString("id-ID")} karakter</span><button onClick={analyzeIdea} disabled={!!busy}>Analisis ide <ArrowRight size={17} /></button></div></div><div className="instruction-box"><label>Instruksi khusus <span>opsional</span></label><textarea placeholder="Contoh: gunakan bahasa mahasiswa semester 3, wajib Flutter, jangan tambahkan login..." value={project.spec.customInstructions} onChange={(event) => updateSpec({ customInstructions: event.target.value })} /></div><div className="feature-row"><div><span>01</span><strong>Wawancara adaptif</strong><p>Pertanyaan mengikuti ide dan jawaban sebelumnya.</p></div><div><span>02</span><strong>Konsisten</strong><p>Fitur, data, API, desain, dan rencana saling terhubung.</p></div><div><span>03</span><strong>Siap diekspor</strong><p>Unduh file Markdown tanpa format tambahan.</p></div></div></section>}
+        {phase === "idea" && <section className="stage idea-stage"><div className="stage-kicker"><Sparkles size={16} /> Mulai dari ide mentah</div><h1>Proyek yang bagus dimulai dari pertanyaan yang tepat.</h1><p>Ceritakan apa yang ingin lu buat. AI akan mencari bagian yang masih ambigu sebelum menulis dokumen.</p><div className="idea-box"><textarea autoFocus placeholder="Contoh: Gue mau bikin aplikasi Flutter yang menampilkan kondisi langit pada tanggal kelahiran pengguna menggunakan API astronomi..." value={project.idea} onChange={(event) => updateProject({ idea: event.target.value })} /><div className="idea-footer"><span>{project.idea.length.toLocaleString("id-ID")} karakter</span><button onClick={analyzeIdea} disabled={!!busy}>Analisis ide <ArrowRight size={17} /></button></div></div><div className="instruction-box"><label>Instruksi khusus <span>opsional</span></label><textarea placeholder="Contoh: gunakan bahasa mahasiswa semester 3, wajib Flutter, jangan tambahkan login..." value={project.spec.customInstructions} onChange={(event) => updateSpec({ customInstructions: event.target.value })} /></div><div className="guardrails-card"><div className="guardrails-header"><div className="guardrails-title"><ShieldCheck size={14} /><span>Standar Rekayasa & Anti-Slop Aktif</span></div><span className="guardrails-badge">Enforced</span></div><div className="guardrails-chips"><span className="guardrail-chip"><Palette size={12} /> Frontend Design</span><span className="guardrail-chip"><ShieldCheck size={12} /> Anti-UI-Slop</span><span className="guardrail-chip"><Code size={12} /> Antislop Code</span><span className="guardrail-chip"><Layers size={12} /> Clean Architecture</span><span className="guardrail-chip"><Check size={12} /> WCAG AA Contrast</span></div><p className="guardrails-desc">Perencanaan otomatis menerapkan sistem warna domain, tipografi terarah, 5 status antarmuka lengkap, larangan komentar kode dekoratif, dan eliminasi template AI generik.</p></div><div className="feature-row"><div><span>01</span><strong>Wawancara adaptif</strong><p>Pertanyaan mengikuti ide dan jawaban sebelumnya.</p></div><div><span>02</span><strong>Konsisten</strong><p>Fitur, data, API, desain, dan rencana saling terhubung.</p></div><div><span>03</span><strong>Siap diekspor</strong><p>Unduh file Markdown tanpa format tambahan.</p></div></div></section>}
 
         {phase === "interview" && <section className="stage interview-stage"><div className="stage-header"><div><span className="stage-kicker"><BrainCircuit size={16} /> Wawancara kebutuhan</span><h1>Beberapa keputusan masih perlu diperjelas.</h1><p>Jawab singkat saja. Pilihan yang tersedia bukan batasan, lu tetap bisa menulis jawaban sendiri.</p></div><span className="question-count">{questions.length} pertanyaan</span></div><div className="question-stack">{questions.map((question, index) => { const draft = draftAnswers[question.id] ?? { selected: [], custom: "" }; return <div className="question-card" key={question.id}><div className="question-number">0{index + 1}</div><div className="question-body"><div className="question-meta"><span>{question.label}</span><em>{question.selectionMode === "multiple" ? "Bisa pilih beberapa" : "Pilih satu"}</em></div><h2>{question.question}</h2>{question.why && <p>{question.why}</p>}<div className="option-row">{question.options?.map((option) => { const selected = draft.selected.includes(option); return <button type="button" aria-pressed={selected} className={selected ? "selected" : ""} key={option} onClick={() => toggleQuestionOption(question, option)}>{selected && <Check size={14} />}{option}</button>; })}</div><textarea placeholder={question.selectionMode === "multiple" ? "Tambahkan jawaban lain (opsional)..." : "Atau tulis jawaban sendiri..."} value={draft.custom} onChange={(event) => updateCustomAnswer(question, event.target.value)} /></div></div>; })}</div><div className="stage-actions"><button className="text-button" onClick={() => setPhase("idea")}>Kembali ke ide</button><button className="primary-button" onClick={submitAnswers} disabled={!!busy}>Lanjutkan analisis <ArrowRight size={17} /></button></div></section>}
 
         {phase === "review" && <section className="stage review-stage"><span className="stage-kicker"><Check size={16} /> Konfirmasi ruang lingkup</span><h1>Cek pemahaman AI sebelum dokumen dibuat.</h1><div className="summary-card"><span>Ringkasan proyek</span><textarea value={project.spec.summary} onChange={(event) => updateSpec({ summary: event.target.value })} /></div><div className="answer-grid">{project.spec.answers.map((answer, index) => <div key={`${answer.question}-${index}`}><span>Keputusan {String(index + 1).padStart(2, "0")}</span><strong>{answer.question}</strong><p>{answer.answer}</p></div>)}</div><div className="doc-selector"><div><span className="stage-kicker"><FileCode2 size={16} /> Paket dokumen otomatis</span><h2>AI memilih file yang relevan.</h2><p>Rekomendasi dibuat dari hasil wawancara. PRD, desain, dan catatan keputusan selalu disertakan; file lain tetap bisa lu ubah sebelum mulai.</p>{canResumeGeneration && <div className="resume-note"><RefreshCw size={14} /><span>{completedSelectedDocuments} dokumen sudah tersimpan. Proses berikutnya melanjutkan {remainingDocuments} dokumen yang tersisa.</span></div>}</div><div className="doc-options">{DOC_OPTIONS.map(([name, description]) => { const selected = selectedDocs.includes(name); const recommendation = documentRecommendations.find((item) => item.name === name); const required = REQUIRED_DOCUMENTS.has(name); return <button type="button" key={name} aria-pressed={selected} disabled={required} className={`${selected ? "selected" : ""} ${required ? "required" : ""}`} onClick={() => toggleDocument(name)}><span className="select-box">{selected && <Check size={14} />}</span><span><strong>{name}{required && <small>Wajib</small>}</strong><em>{recommendation?.reason || description}</em></span></button>; })}</div></div><div className="stage-actions"><button className="text-button" onClick={() => setPhase("interview")}>Revisi jawaban</button>{project.documents.length > 0 && <button className="ghost-button" onClick={() => { setActiveDoc(project.documents[0].name); setPhase("documents"); }}><FileText size={15} /> Buka {project.documents.length} dokumen selesai</button>}<button className="primary-button" onClick={generateDocuments} disabled={!!busy}>{canResumeGeneration ? `Lanjutkan ${remainingDocuments} dokumen` : `Buat ${selectedDocs.length} dokumen`} <Sparkles size={17} /></button></div></section>}
 
-        {phase === "documents" && <section className="documents-stage"><aside className="document-list"><div><span className="stage-kicker"><FileText size={16} /> Dokumen proyek</span><h2>{project.documents.length} file siap ditinjau</h2></div>{project.documents.map((doc) => <button key={doc.name} onClick={() => setActiveDoc(doc.name)} className={activeDoc === doc.name ? "active" : ""}><FileText size={16} /><span><strong>{doc.name}</strong><em>{doc.mode === "demo" ? "Draf demo" : "Dibuat AI"}</em></span><ChevronRight size={15} /></button>)}<button className="regenerate" onClick={() => setPhase("review")}><RefreshCw size={15} /> Atur ulang paket</button></aside><div className="document-editor">{currentDocument ? <><div className="editor-toolbar"><div><strong>{currentDocument.name}</strong><span>{currentDocument.content.length.toLocaleString("id-ID")} karakter</span></div><div className="view-tabs"><button className={view === "preview" ? "active" : ""} onClick={() => setView("preview")}>Preview</button><button className={view === "source" ? "active" : ""} onClick={() => setView("source")}>Markdown</button></div><button className="download-button" onClick={() => regenerateSingleDocument(currentDocument.name)} disabled={!!busy} title="Buat ulang dokumen ini saja"><RefreshCw size={14} className={busy ? "spin" : ""} /> Buat ulang</button><button type="button" className={`download-button copy-button ${copiedDoc === currentDocument.name ? "copied" : ""}`} onClick={() => copyDocument(currentDocument)} title="Salin isi dokumen ke clipboard">{copiedDoc === currentDocument.name ? (<><Check size={14} /> Tersalin!</>) : (<><Copy size={14} /> Salin</>)}</button><button className="download-button" onClick={() => downloadDocument(currentDocument)}><Download size={16} /> Unduh</button></div>{view === "preview" ? <div className="preview-scroll"><MarkdownPreview content={currentDocument.content} /></div> : <textarea className="source-editor" value={currentDocument.content} onChange={(event) => updateDocument(event.target.value)} spellCheck={false} />}</> : <div className="empty-doc">Pilih dokumen untuk ditinjau.</div>}</div></section>}
+        {phase === "documents" && <section className="documents-stage"><aside className="document-list"><div><span className="stage-kicker"><FileText size={16} /> Dokumen proyek</span><h2>{project.documents.length} file siap ditinjau</h2></div>{project.documents.map((doc) => { const isPrompt = doc.name === "PROMPT.md"; return <button key={doc.name} onClick={() => setActiveDoc(doc.name)} className={`${activeDoc === doc.name ? "active" : ""} ${isPrompt ? "doc-prompt-item" : ""}`}>{isPrompt ? <Terminal size={16} /> : <FileText size={16} />}<span><strong>{doc.name}</strong><em>{isPrompt ? "Prompt Agent" : doc.mode === "demo" ? "Draf demo" : "Dibuat AI"}</em></span><ChevronRight size={15} /></button>; })}{project.documents.length > 0 && <button className="download-zip-aside" onClick={() => downloadAllZip()} title="Unduh semua dokumen proyek dalam satu file .zip"><FolderArchive size={15} /> Unduh Semua (.zip)</button>}<button className="regenerate" onClick={() => setPhase("review")}><RefreshCw size={15} /> Atur ulang paket</button></aside><div className="document-editor">{currentDocument ? <><div className="editor-toolbar"><div><strong>{currentDocument.name}</strong><span>{currentDocument.content.length.toLocaleString("id-ID")} karakter</span></div><div className="view-tabs"><button className={view === "preview" ? "active" : ""} onClick={() => setView("preview")}>Preview</button><button className={view === "source" ? "active" : ""} onClick={() => setView("source")}>Markdown</button></div><button className="download-button" onClick={() => regenerateSingleDocument(currentDocument.name)} disabled={!!busy} title="Buat ulang dokumen ini saja"><RefreshCw size={14} className={busy ? "spin" : ""} /> Buat ulang</button><button type="button" className={`download-button copy-button ${copiedDoc === currentDocument.name ? "copied" : ""}`} onClick={() => copyDocument(currentDocument)} title="Salin isi dokumen ke clipboard">{copiedDoc === currentDocument.name ? (<><Check size={14} /> Tersalin!</>) : (<><Copy size={14} /> Salin</>)}</button><button className="download-button" onClick={() => downloadDocument(currentDocument)} title="Unduh file dokumen ini saja"><Download size={16} /> Unduh</button><button className="download-button download-zip-btn" onClick={() => downloadAllZip()} title="Unduh semua file dokumen dalam arsip .zip"><FolderArchive size={14} /> Semua (.zip)</button></div><div className="agent-prompt-banner"><div className="agent-prompt-info"><div className="agent-prompt-header-line"><div className="agent-prompt-tag"><Terminal size={12} /><span>Direktif AI Coding Agent</span></div><div className="agent-guardrails-pills"><span>Anti-Slop UI</span><span>Clean Code</span><span>No-Emoji</span><span>WCAG 4.5:1</span></div></div><strong>Instruksi Eksekusi untuk Claude Code, Cursor, Codex, atau Copilot</strong><p>Direktif terstruktur dengan standar rekayasa perangkat lunak formal. Memerintahkan agen membaca dokumen spesifikasi proyek sebagai ground-truth sebelum menulis kode.</p></div><button type="button" className={`agent-prompt-copy-btn ${copiedPrompt ? "copied" : ""}`} onClick={copyMasterPrompt} title="Salin direktif eksekusi ke clipboard">{copiedPrompt ? (<><Check size={14} /> Direktif Tersalin!</>) : (<><Copy size={14} /> Salin Direktif Agent</>)}</button></div>{view === "preview" ? <div className="preview-scroll"><MarkdownPreview content={currentDocument.content} /></div> : <textarea className="source-editor" value={currentDocument.content} onChange={(event) => updateDocument(event.target.value)} spellCheck={false} />}</> : <div className="empty-doc">Pilih dokumen untuk ditinjau.</div>}</div></section>}
       </div>
     </section>
   </main>;
