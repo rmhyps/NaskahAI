@@ -1,0 +1,18 @@
+services:
+  naskah-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: naskah-ai
+    ports:
+      - "8787:8787"
+    environment:
+      - NINE_ROUTER_BASE_URL=${DOCKER_NINE_ROUTER_BASE_URL:-http://host.docker.internal:20128}
+      - NINE_ROUTER_API_KEY=${NINE_ROUTER_API_KEY:-sk-dummy}
+      - NINE_ROUTER_MODEL=${NINE_ROUTER_MODEL:-ag/gemini-3.8-flash-high}
+    volumes:
+      - ./data:/app/.data
+      - ./wrangler-state:/app/.wrangler/state
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

@@ -32,6 +32,8 @@ yarn-error.log*
 .env*
 !.env.example
 /.data/
+/data/
+/wrangler-state/
 
 # vercel
 .vercel

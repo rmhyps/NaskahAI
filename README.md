@@ -120,6 +120,43 @@ Buka peramban di:
 
 ---
 
+## Menjalankan Menggunakan Docker
+
+Tersedia konfigurasi `Dockerfile` dan `docker-compose.yml` untuk menjalankan NaskahAI dalam container secara instan tanpa perlu menyiapkan Node.js di komputer lokal.
+
+### 1. Menggunakan Docker Compose (Direkomendasikan)
+
+Pastikan AI router Anda aktif di host, lalu jalankan:
+```bash
+docker compose up --build -d
+```
+
+Aplikasi akan berjalan di:
+**`http://localhost:8787`**
+
+> **Catatan AI Router:**
+> Jika AI router (`9Router`) berjalan di komputer host pada port `20128`, container secara otomatis terhubung melalui `http://host.docker.internal:20128`.
+
+### 2. Menggunakan Perintah Docker Standar
+
+```bash
+# Build image Docker
+docker build -t naskah-ai .
+
+# Jalankan container
+docker run -d \
+  -p 8787:8787 \
+  -e NINE_ROUTER_BASE_URL="http://host.docker.internal:20128" \
+  -e NINE_ROUTER_API_KEY="sk-your-api-key" \
+  -e NINE_ROUTER_MODEL="ag/gemini-3.8-flash-high" \
+  --add-host=host.docker.internal:host-gateway \
+  -v "${PWD}/data:/app/.data" \
+  --name naskah-ai \
+  naskah-ai
+```
+
+---
+
 ## Skrip yang Tersedia
 
 - `pnpm dev`: Menjalankan server pengembangan lokal dengan HMR pada port `5173`.
