@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "../components/theme-provider";
+import { Toaster } from "../components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Naskah AI | Project Planner",
@@ -16,8 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <body className="antialiased">{children}</body>
+    <html lang="id" suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

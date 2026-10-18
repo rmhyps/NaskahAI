@@ -15,6 +15,9 @@ const DOCUMENT_ORDER = [
   "design.md",
   "implementation-plan.md",
   "decisions.md",
+  "security.md",
+  "testing-plan.md",
+  "env-example.md",
 ] as const;
 type DocumentName = (typeof DOCUMENT_ORDER)[number];
 type DocumentRecommendation = {
@@ -247,7 +250,7 @@ function demoInterview(payload: AiPayload) {
     return {
       mode: "demo",
       ready: true,
-      summary: `Proyek berangkat dari ide: ${payload.idea}. Kebutuhan dasar telah cukup untuk membuat draf awal. Keputusan yang belum lengkap akan ditandai sebagai asumsi di dokumen.`,
+      summary: `Proyek berangkat dari ide: ${payload.idea}. Kebutuhan dasar telah cukup untuk membuat draf awal berstandar modern 2026. Keputusan yang belum lengkap akan ditandai sebagai asumsi di dokumen.`,
       questions: [],
       recommendedDocuments: fallbackDocumentRecommendations(),
     };
@@ -271,20 +274,30 @@ function demoInterview(payload: AiPayload) {
         ],
       },
       {
-        id: "users",
-        label: "Pengguna",
-        question: "Siapa pengguna utama aplikasi ini?",
-        why: "Role dan kebutuhan UI bergantung pada pengguna.",
-        selectionMode: "multiple",
-        options: ["Saya sendiri", "Tim kecil", "Pengguna umum"],
+        id: "aesthetic_benchmark",
+        label: "Gaya visual & benchmark",
+        question: "Gaya visual dan benchmark aplikasi publik apa yang ingin dijadikan acuan?",
+        why: "Mencegah tampilan kaku jadul dan mengadopsi standar desain modern 2026.",
+        selectionMode: "single",
+        options: [
+          "Linear / Superlist (OLED Deep Zinc, Hairline Border, Monokrom Presisi)",
+          "Amie / Cron (Tinted Soft Capsules, Playful Minimalist, Fluid Timeline)",
+          "Things 3 / Apple Reminders (Tactile Gestures, Spring Physics, Clean Typo)",
+          "Material You Dynamic (Android 15 Palette, Adaptive Surfaces, Squircle)",
+        ],
       },
       {
         id: "platform",
-        label: "Platform",
-        question: "Aplikasi ini paling utama akan dipakai di mana?",
-        why: "Platform memengaruhi desain dan stack.",
-        selectionMode: "single",
-        options: ["Web", "Mobile", "Desktop"],
+        label: "Platform & Responsivitas",
+        question: "Perangkat dan faktor bentuk apa yang harus didukung dengan layout adaptif?",
+        why: "Menentukan arsitektur WindowSizeClass (ponsel, foldable, tablet) atau breakpoints responsif.",
+        selectionMode: "multiple",
+        options: [
+          "Mobile Ponsel (Compact < 600dp)",
+          "Perangkat Lipat / Foldable (Medium 600-840dp Dual-Pane)",
+          "Tablet & Layar Lebar (Expanded > 840dp Bento Layout)",
+          "Web Desktop Responsif",
+        ],
       },
     ],
     recommendedDocuments: [],
@@ -297,14 +310,17 @@ function demoDocument(name: string, payload: AiPayload) {
     .map((item) => `- **${item.question}:** ${item.answer}`)
     .join("\n");
   const sections: Record<string, string> = {
-    "PRD.md": `# PRD: ${idea}\n\n## Status dokumen\n\nDraf awal dalam mode demo. Perlu ditinjau sebelum dianggap final.\n\n## Ringkasan\n\n${payload.summary || idea}\n\n## Kebutuhan yang diketahui\n\n${answers || "- Belum ada jawaban kebutuhan."}\n\n## Ruang lingkup MVP\n\n- F-001: Alur utama yang menyelesaikan tujuan inti pengguna.\n- F-002: Umpan balik yang jelas untuk kondisi berhasil dan gagal.\n\n## Non-goals\n\n- Fitur yang belum dikonfirmasi tidak termasuk MVP.\n\n## Acceptance criteria\n\n- [ ] Pengguna dapat menyelesaikan alur utama tanpa langkah yang ambigu.\n- [ ] Sistem menampilkan validasi dan error yang dapat dipahami.\n\n## Pertanyaan terbuka\n\n- Stack dan detail integrasi perlu dikonfirmasi.`,
-    "architecture.md": `# Arsitektur: ${idea}\n\n## Status\n\nRancangan konseptual mode demo.\n\n## Komponen\n\n\`\`\`mermaid\nflowchart LR\n  U["Pengguna"] --> UI["Antarmuka"]\n  UI --> A["Logika aplikasi"]\n  A --> D["Penyimpanan opsional"]\n\`\`\`\n\n## Catatan keputusan\n\nArsitektur final mengikuti platform, kebutuhan data, dan integrasi yang dikonfirmasi.`,
+    "PRD.md": `# PRD: ${idea}\n\n## Status dokumen\n\nDraf awal dalam mode demo. Perlu ditinjau sebelum dianggap final.\n\n## Ringkasan\n\n${payload.summary || idea}\n\n## Kebutuhan yang diketahui\n\n${answers || "- Belum ada jawaban kebutuhan."}\n\n## Ruang lingkup MVP\n\n- F-001: Alur utama yang menyelesaikan tujuan inti pengguna.\n- F-002: Umpan balik yang jelas untuk kondisi berhasil dan gagal.\n\n## Kebutuhan Non-Fungsional (NFR)\n\n- Kelancaran rendering 60/120 FPS tanpa frame drop.\n- Responsivitas adaptif multi-layar (ponsel, foldable, tablet).\n\n## Acceptance criteria\n\n- [ ] Pengguna dapat menyelesaikan alur utama tanpa langkah yang ambigu.\n- [ ] Sistem menampilkan validasi dan error yang dapat dipahami.\n\n## Pertanyaan terbuka\n\n- Stack dan detail integrasi perlu dikonfirmasi.`,
+    "architecture.md": `# Arsitektur: ${idea}\n\n## Status\n\nRancangan konseptual mode demo.\n\n## Komponen\n\n\`\`\`mermaid\nflowchart LR\n  U["Pengguna"] --> UI["Antarmuka Modern (Adaptive Layout)"]\n  UI --> A["Logika Aplikasi & Motion Engine"]\n  A --> D["Penyimpanan Opsional"]\n\`\`\`\n\n## Catatan Arsitektur\n\nMengadopsi arsitektur bersih berlapis (Clean Architecture) dengan pemisahan Adaptive Window Management dan Haptic & Motion Engine.`,
     "database.md": `# Model Data: ${idea}\n\n## Status kebutuhan\n\nKebutuhan database belum dapat dipastikan dalam mode demo. Jangan membuat tabel sebelum objek data dan siklus hidupnya dikonfirmasi.\n\n## Pertanyaan terbuka\n\n- Data apa yang harus bertahan lintas sesi?\n- Siapa yang boleh membaca dan mengubah data?`,
     "api.md": `# API: ${idea}\n\n## Status kebutuhan\n\nBelum ada kontrak API yang dikonfirmasi. Endpoint tidak dibuat hanya untuk memenuhi template.\n\n## Informasi yang diperlukan\n\n- Integrasi eksternal\n- Metode autentikasi\n- Bentuk input dan output\n- Kondisi error`,
-    "design.md": `# Desain Produk: ${idea}\n\n## Prinsip\n\n- Fokus pada satu aksi utama per layar.\n- Gunakan bahasa yang mudah dipahami pengguna.\n- Sediakan state kosong, loading, berhasil, dan gagal.\n\n## Alur awal\n\n\`\`\`mermaid\nflowchart TD\n  A["Masuk"] --> B["Melakukan tugas utama"]\n  B --> C["Meninjau hasil"]\n  C --> D["Selesai atau revisi"]\n\`\`\`\n\n## Catatan\n\nStruktur halaman final mengikuti platform dan target pengguna yang dikonfirmasi.`,
-    "implementation-plan.md": `# Rencana Implementasi: ${idea}\n\n## Fase 1: Validasi kebutuhan\n\n- [ ] Konfirmasi tujuan dan pengguna utama.\n- [ ] Kunci ruang lingkup MVP.\n- [ ] Verifikasi kebutuhan data dan integrasi.\n\n## Fase 2: Desain\n\n- [ ] Finalisasi user flow.\n- [ ] Finalisasi arsitektur.\n- [ ] Tentukan acceptance criteria.\n\n## Fase 3: Implementasi\n\n- [ ] Implementasikan fitur MVP sesuai dependency.\n- [ ] Uji acceptance criteria.\n\n> Dokumen ini adalah rencana. Belum ada pekerjaan implementasi yang dijalankan.`,
-    "decisions.md": `# Keputusan Proyek: ${idea}\n\n## Dikonfirmasi\n\n${answers || "Belum ada keputusan yang dikonfirmasi."}\n\n## Asumsi\n\n- Draf awal memprioritaskan MVP sederhana.\n\n## Belum diputuskan\n\n- Stack final\n- Kebutuhan penyimpanan\n- Integrasi eksternal`,
-    "PROMPT.md": `# DIREKTIF EKSEKUSI AI CODING AGENT\n\n## Peran dan Batasan Wewenang\nAnda bertindak sebagai Lead Software Architect dan Senior Full-Stack Engineer yang bertugas mengimplementasikan proyek: **${idea}** dari fondasi awal hingga siap produksi.\n\n## Sumber Kebenaran Tunggal (Ground Truth)\nSebelum menulis atau mengubah kode, Anda WAJIB membaca dan mematuhi seluruh dokumen perencanaan yang tersedia di repositori:\n- \`PRD.md\`: Katalog fitur dengan ID stabil, kriteria penerimaan, dan batasan ruang lingkup.\n- \`architecture.md\`: Komponen sistem, aliran data, dan keputusan teknologi.\n- \`database.md\`: Model data, relasi, constraint, dan siklus hidup penyimpanan.\n- \`api.md\`: Kontrak endpoint, metode HTTP, format payload, dan kode status.\n- \`design.md\`: Alur interaksi, navigasi, dan penanganan lima kondisi UI (loading, empty, success, error, unauthorized).\n- \`implementation-plan.md\`: Urutan fase pengerjaan dan checklist deliverable.\n- \`decisions.md\`: Keputusan terkonfirmasi, asumsi teknis, dan pertanyaan terbuka.\n\n## Protokol Kerja Utama\n1. Kepatuhan Ruang Lingkup: Dilarang keras menambahkan fitur, dependensi, atau tombol di luar spesifikasi tanpa instruksi pengguna.\n2. Keterlacakan ID Fitur: Setiap modul, fungsi, dan pengujian harus merujuk ke ID fitur terkait (misalnya F-001).\n3. Eksekusi Bertahap: Selesaikan pekerjaan secara berurutan sesuai fase pada implementation-plan.md.\n4. Verifikasi Siklus Tertutup: Tulis pengujian unit dan jalankan verifikasi build tanpa error sebelum menyatakan suatu fase selesai.`,
+    "design.md": `# Desain Produk: ${idea}\n\n## 1. Rujukan Benchmark Publik\n\nMengadopsi pola visual dan interaksi kelas dunia dari **Linear** (hairline border 0.5dp, OLED deep zinc) dan **Amie / Things 3** (tinted soft capsule pills, tactile spring feedback).\n\n## 2. Prinsip & Estetika 2026\n\n- Mengeliminasi gaya kaku jadul (tanpa kartu kaku bersudut tajam dengan strip warna 4dp jadul).\n- Continuous squircle curvature (radius 16-20dp) dengan subtle surface hierarchy.\n- Tipografi modern berkarakter dengan tight tracking pada display.\n- Sensasi taktil haptic feedback dan transisi spring motion.\n\n## 3. Matriks Layout Adaptif (WindowSizeClass)\n\n| Breakpoint | Target Layar | Pola Navigasi | Pola Konten |\n|---|---|---|---|\n| Compact (< 600dp) | Ponsel Potret | Floating Bottom Pill | Single Column Feed |\n| Medium (600-840dp) | Foldable / Lanskap | Navigation Rail | Dual-Pane Master-Detail |\n| Expanded (> 840dp) | Tablet / Desktop | Permanent Drawer | 3-Column Bento Grid |\n\n## 4. Alur Interaksi\n\n\`\`\`mermaid\nflowchart TD\n  A["Buka Aplikasi"] --> B["Bento Dashboard & Task Timeline"]\n  B --> C["Interaksi Cepat & Haptic Feedback"]\n  C --> D["Selesai & State Terupdate"]\n\`\`\`\n\n## 5. UI States Global\n\nMenangani secara terpusat: Loading (shimmer), Empty, Success, Error, dan Unauthorized.`,
+    "implementation-plan.md": `# Rencana Implementasi: ${idea}\n\n## Fase 1: Validasi kebutuhan & Fondasi\n\n- [ ] Konfirmasi tujuan dan benchmark desain publik.\n- [ ] Kunci ruang lingkup MVP.\n- [ ] Setup arsitektur adaptif.\n\n## Fase 2: Implementasi Antarmuka Modern & Logika\n\n- [ ] Bangun komponen berestetika 2026 (squircle, hairline border, tinted pill).\n- [ ] Implementasikan adaptive layout multi-device.\n- [ ] Integrasikan haptic feedback dan spring motion.\n\n## Fase 3: Stabilisasi dan Pengujian\n\n- [ ] Verifikasi acceptance criteria pada berbagai ukuran layar.\n- [ ] Uji unit dan build.\n\n> Dokumen ini adalah rencana. Belum ada pekerjaan implementasi yang dijalankan.`,
+    "decisions.md": `# Keputusan Proyek: ${idea}\n\n## Dikonfirmasi\n\n${answers || "Belum ada keputusan yang dikonfirmasi."}\n\n## Asumsi\n\n- Draf awal memprioritaskan MVP sederhana dengan standar desain modern 2026.\n\n## Belum diputuskan\n\n- Stack final\n- Kebutuhan penyimpanan\n- Integrasi eksternal`,
+    "security.md": `# Panduan Keamanan & Kepatuhan: ${idea}\n\n## 1. Model Autentikasi & Otorisasi\n\n- Otentikasi: Token berbasis standar aman dengan masa berlaku terbatas.\n- Otorisasi: Kontrol akses berbasis peran (RBAC) pada setiap endpoint sensitif.\n\n## 2. Perlindungan Data & Sanitasi Input\n\n- Seluruh payload request wajib divalidasi skema ketat sebelum diproses.\n- Sanitasi input untuk mencegah injeksi SQL, XSS, dan CSRF.\n- Penyimpanan data rahasia wajib dienkripsi saat transit (TLS 1.3) dan rest.\n\n## 3. Checklist Kepatuhan OWASP Top 10\n\n- [ ] Pembatasan rate-limiting pada endpoint autentikasi.\n- [ ] Header keamanan HTTP (CSP, HSTS, X-Content-Type-Options).\n- [ ] Penanganan CORS yang eksplisit dan aman.`,
+    "testing-plan.md": `# Rencana Pengujian Sistem: ${idea}\n\n## 1. Strategi & Piramida Testing\n\n- Unit Testing (70%): Logika bisnis inti, validasi skema data, dan parser.\n- Integration Testing (20%): Kontrak API, siklus simpan data, dan interaksi komponen.\n- E2E / UI Testing (10%): Alur kritis pengguna dari awal hingga akhir.\n\n## 2. Matriks Pengujian Fitur\n\n| ID Fitur | Cakupan Test | Target Hasil | Prioritas |\n|---|---|---|---|\n| F-001 | Alur utama | Sukses tanpa error | Tinggi |\n| F-002 | Error handling & 5 UI states | UI ramah & pemulihan cepat | Sedang |\n\n## 3. Kriteria Siap Rilis (Definition of Done)\n\n- [ ] 0 error pada build dan linting.\n- [ ] Seluruh acceptance criteria terverifikasi.\n- [ ] Pengujian responsivitas pada layar ponsel, foldable, dan desktop.`,
+    "env-example.md": `# Spesifikasi Variabel Lingkungan: ${idea}\n\n## 1. Daftar Variabel Lingkungan\n\n| Variabel | Format | Wajib | Kategori | Deskripsi |\n|---|---|---|---|---|\n| PORT | Angka (misal: 3000) | Opsional | Publik | Port server lokal |\n| DATABASE_URL | Connection String | Ya | Rahasia | URI koneksi database utama |\n| API_SECRET_KEY | String random 32+ char | Ya | Rahasia | Kunci enkripsi token sesi |\n\n## 2. Template .env.example\n\n\`\`\`bash\n# Server Port\nPORT=3000\n\n# Database Connection\nDATABASE_URL="postgresql://user:password@localhost:5432/app_db"\n\n# Security Keys (Ganti dengan kunci acak Anda)\nAPI_SECRET_KEY="ganti-dengan-kunci-rahasia-produksi"\n\`\`\``,
+    "PROMPT.md": `# DIREKTIF EKSEKUSI AI CODING AGENT\n\n## Peran dan Batasan Wewenang\nAnda bertindak sebagai Lead Software Architect dan Senior Full-Stack Engineer yang bertugas mengimplementasikan proyek: **${idea}** dari fondasi awal hingga siap produksi.\n\n## Sumber Kebenaran Tunggal (Ground Truth)\nSebelum menulis atau mengubah kode, Anda WAJIB membaca dan mematuhi seluruh dokumen perencanaan yang tersedia di repositori:\n- \`PRD.md\`: Katalog fitur dengan ID stabil, kriteria penerimaan, dan batasan ruang lingkup.\n- \`architecture.md\`: Komponen sistem, aliran data, dan keputusan teknologi.\n- \`database.md\`: Model data, relasi, constraint, dan siklus hidup penyimpanan.\n- \`api.md\`: Kontrak endpoint, metode HTTP, format payload, dan kode status.\n- \`design.md\`: Alur interaksi, navigasi, dan penanganan lima kondisi UI (loading, empty, success, error, unauthorized).\n- \`implementation-plan.md\`: Urutan fase pengerjaan dan checklist deliverable.\n- \`decisions.md\`: Keputusan terkonfirmasi, asumsi teknis, dan pertanyaan terbuka.\n- \`security.md\`: Panduan autentikasi, otorisasi RBAC, dan kepatuhan OWASP.\n- \`testing-plan.md\`: Strategi unit testing, skenario integrasi, dan kriteria rilis.\n- \`env-example.md\`: Definisi variabel lingkungan sistem dan template aman.\n\n## Protokol Kerja Utama\n1. Kepatuhan Ruang Lingkup: Dilarang keras menambahkan fitur, dependensi, atau tombol di luar spesifikasi tanpa instruksi pengguna.\n2. Keterlacakan ID Fitur: Setiap modul, fungsi, dan pengujian harus merujuk ke ID fitur terkait (misalnya F-001).\n3. Standar Estetika Modern 2026: DILARANG KERAS membuat antarmuka kaku jadul ("Gaya Majapahit" seperti kartu kaku tebal dengan strip 4dp). Terapkan squircle radius 16-20dp, hairline border 0.5dp, tinted pill badges, dan floating navigation.\n4. Arsitektur Layout Adaptif: Wajib implementasikan responsivitas multi-screen (ponsel, foldable, tablet) sesuai matriks WindowSizeClass / Breakpoints pada design.md.\n5. Mikro-Interaksi: Berikan getaran haptic dan animasi transisi halus.\n6. Verifikasi Siklus Tertutup: Tulis pengujian unit dan jalankan verifikasi build tanpa error sebelum menyatakan suatu fase selesai.`,
   };
   return sections[name] ?? `# ${name}\n\nDokumen belum tersedia.`;
 }
@@ -486,9 +502,9 @@ export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as AiPayload;
     const idea = payload.idea?.trim() ?? "";
-    if (!idea || idea.length > 12_000) {
+    if (!idea || idea.length > 50_000) {
       return reply(
-        { error: "Ide proyek wajib diisi dan maksimal 12.000 karakter." },
+        { error: "Ide proyek wajib diisi dan maksimal 50.000 karakter." },
         400
       );
     }
@@ -516,7 +532,16 @@ export async function POST(request: Request) {
         2
       )}\n\nINSTRUKSI KHUSUS:\n${
         payload.customInstructions || "Tidak ada"
-      }\n\nAnalisis kebutuhan yang belum jelas. Jika informasi belum cukup, set ready=false dan ajukan maksimal tiga pertanyaan baru. Jangan ulangi pertanyaan yang sudah terjawab dan tidak ada batas jumlah putaran selama masih ada keputusan penting yang belum jelas. Jika informasi sudah cukup untuk draf yang bertanggung jawab, set ready=true, kosongkan questions, dan rekomendasikan paket dokumen. PRD.md, design.md, dan decisions.md wajib included=true. Nilai kebutuhan architecture.md, database.md, api.md, dan implementation-plan.md dari konteks proyek; jangan memaksakan dokumen yang tidak relevan. Tentukan selectionMode="multiple" jika beberapa opsi dapat berlaku bersamaan, misalnya daftar fitur, jenis konten, role, atau platform target. Gunakan selectionMode="single" jika opsi saling eksklusif atau pengguna harus memilih satu keputusan utama, misalnya teknologi utama, metode autentikasi, atau prioritas. Keluarkan HANYA JSON valid: {"ready":boolean,"summary":"ringkasan ruang lingkup dan keputusan","questions":[{"id":"slug","label":"label singkat","question":"pertanyaan","why":"alasan singkat","selectionMode":"single|multiple","options":["opsi 1","opsi 2","opsi 3"]}],"recommendedDocuments":[{"name":"PRD.md|architecture.md|database.md|api.md|design.md|implementation-plan.md|decisions.md","included":boolean,"reason":"alasan singkat berbasis kebutuhan proyek"}]}. Saat ready=true, sertakan tepat satu entri untuk ketujuh nama dokumen.`;
+      }\n\nAnalisis kebutuhan yang belum jelas. Jika informasi belum cukup, set ready=false dan ajukan maksimal tiga pertanyaan baru. Jangan ulangi pertanyaan yang sudah terjawab dan tidak ada batas jumlah putaran selama masih ada keputusan penting yang belum jelas.
+
+PANDUAN EKSPLORASI WAWANCARA (STANDAR 2026):
+- Bila proyek memiliki antarmuka (web, mobile, atau desktop) dan belum ada keputusan mengenai gaya visual, ajukan pertanyaan mengenai preferensi gaya desain & benchmark produk publik (seperti Linear, Amie, Things 3, Cron, Notion, Apple iOS 18/Android 15) dan/atau kebutuhan layout adaptif multi-layar (ponsel, foldable, tablet, desktop) agar desain tidak jatuh ke template kaku jadul.
+- Tentukan selectionMode="multiple" jika beberapa opsi dapat berlaku bersamaan (misalnya fitur, jenis konten, role, platform target/layar).
+- Tentukan selectionMode="single" jika opsi saling eksklusif (misalnya teknologi utama, gaya estetika benchmark utama, atau arsitektur inti).
+
+Jika informasi sudah cukup untuk draf yang bertanggung jawab, set ready=true, kosongkan questions, dan rekomendasikan paket dokumen. PRD.md, design.md, dan decisions.md wajib included=true. Nilai kebutuhan architecture.md, database.md, api.md, implementation-plan.md, security.md, testing-plan.md, dan env-example.md dari konteks proyek; jangan memaksakan dokumen yang tidak relevan.
+
+Keluarkan HANYA JSON valid: {"ready":boolean,"summary":"ringkasan ruang lingkup dan keputusan","questions":[{"id":"slug","label":"label singkat","question":"pertanyaan","why":"alasan singkat","selectionMode":"single|multiple","options":["opsi 1","opsi 2","opsi 3"]}],"recommendedDocuments":[{"name":"PRD.md|architecture.md|database.md|api.md|design.md|implementation-plan.md|decisions.md|security.md|testing-plan.md|env-example.md","included":boolean,"reason":"alasan singkat berbasis kebutuhan proyek"}]}. Saat ready=true, sertakan entri untuk setiap dokumen dalam daftar.`;
 
       const content = await callRouter(
         [
@@ -559,6 +584,11 @@ KEPUTUSAN WAWANCARA:
 ${answersFormatted || "- Belum ada keputusan spesifik"}
 
 ${priorSection ? `DOKUMEN SEBELUMNYA (Jaga konsistensi):\n${priorSection}\n\n` : ""}
+STANDAR REKAYASA & ESTETIKA MODERN 2026:
+- Terapkan standar Anti-Slop, Anti-UI-Slop, dan Frontend Design 2026.
+- Untuk dokumen antarmuka (design.md, PRD.md): DILARANG KERAS menggunakan komponen jadul/kaku ("Gaya Majapahit" seperti kartu kaku 2014 dengan strip warna vertikal 4dp di kiri, font default tanpa tracking, atau palet enterprise membosankan). WAJIB sertakan acuan benchmark publik (misal: Linear, Amie, Things 3, Cron, Notion, Apple), estetika modern 2026 (squircle 16-24dp, hairline border 0.5dp, tinted capsules, floating navigation, bento-grid), matriks layout adaptif konkret (WindowSizeClass / Breakpoints), dan sensasi mikro-interaksi/haptics.
+- Untuk architecture.md: WAJIB sertakan modul arsitektur Adaptive Layout (WindowSizeClass / Breakpoint handling) dan modul Haptic & Motion Engine.
+
 PETUNJUK FORMAT OUTPUT:
 - Keluarkan HANYA Markdown file tersebut dimulai dari heading level 1 (# Judul).
 - Dilarang membungkus seluruh dokumen dengan code fence \`\`\`markdown atau \`\`\`.

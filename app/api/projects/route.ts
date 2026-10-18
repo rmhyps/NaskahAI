@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     const source = payload.project;
     const id = source.id?.trim() || crypto.randomUUID();
     const title = source.title?.trim().slice(0, 160) || "Proyek tanpa judul";
-    const idea = source.idea?.trim().slice(0, 12_000) || "";
+    const idea = source.idea?.trim().slice(0, 50_000) || "";
     const now = new Date().toISOString();
     const cleanDocs: DocumentItem[] = (source.documents ?? [])
       .filter((item): item is { name: string; content: string } =>
